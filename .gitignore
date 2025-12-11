@@ -71,3 +71,4 @@ backend-api/.vs/**
 # Build artifacts (optional)
 bin/
 obj/
+git rm -r --cached backend-api/.vs
