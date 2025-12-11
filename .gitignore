@@ -58,3 +58,16 @@ logs/
 # -------------------------
 ehthumbs.db
 Icon?
+# Visual Studio cache files
+.vs/
+*.db
+*.db-wal
+*.db-shm
+
+# Copilot indices
+backend-api/.vs/
+backend-api/.vs/**
+
+# Build artifacts (optional)
+bin/
+obj/
