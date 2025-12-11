@@ -1,0 +1,60 @@
+# -------------------------
+#  Global Ignored Files
+# -------------------------
+*.log
+*.tmp
+*.bak
+*.DS_Store
+Thumbs.db
+
+# -------------------------
+#  Node / Next.js Frontend
+# -------------------------
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+.env
+.env.*
+!.env.example
+
+# VS Code local settings
+.vscode/
+
+# -------------------------
+#  .NET Backend API
+# -------------------------
+# Build outputs
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+
+# Logs
+logs/
+*.log
+
+# Entity Framework Migrations (optional)
+# If you want to exclude EF migrations uncomment this line:
+# Migrations/
+
+# SQL files
+*.mdf
+*.ldf
+
+# -------------------------
+#  Git metadata accidental folders
+# -------------------------
+**/.git
+**/.gitmodules
+
+# -------------------------
+#  OS files
+# -------------------------
+ehthumbs.db
+Icon?
