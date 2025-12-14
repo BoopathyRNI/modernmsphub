@@ -34,8 +34,13 @@ namespace backend_api.Services
 
             var user = new User
             {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
                 Email = request.Email,
-                PasswordHash = HashPassword(request.Password)
+                PasswordHash = HashPassword(request.Password),
+
+                // POC: generate company scope, no Company table
+                CompanyId = Guid.NewGuid()
             };
 
             await _repo.CreateAsync(user);
@@ -46,6 +51,7 @@ namespace backend_api.Services
                 Message = "User created successfully"
             };
         }
+
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {

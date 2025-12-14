@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "lucide-react": "^0.561.0",
     "next": "16.0.8",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",

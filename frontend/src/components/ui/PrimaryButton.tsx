@@ -1,22 +1,16 @@
-// components/ui/PrimaryButton.tsx
-import { ButtonHTMLAttributes, PropsWithChildren } from "react";
+"use client";
 
-type PrimaryButtonProps = PropsWithChildren<
-  ButtonHTMLAttributes<HTMLButtonElement>
->;
+interface PrimaryButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
 
 export default function PrimaryButton({
   children,
-  className = "",
-  ...rest
+  ...props
 }: PrimaryButtonProps) {
   return (
     <button
-      className={
-        "h-9 rounded bg-[#0066c5] text-xs font-semibold text-white hover:bg-[#0053a1] " +
-        className
-      }
-      {...rest}
+      {...props}
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md"
     >
       {children}
     </button>
