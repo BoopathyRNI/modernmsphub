@@ -1,7 +1,7 @@
 // components/layout/AppHeader.tsx
 import Image from "next/image";
 
-export default function AppHeader() {
+export default function LoginHeader() {
   return (
     <header className="border-b border-slate-100 bg-white">
       <div className="mx-auto max-w-5xl px-8 pt-10 pb-8">
