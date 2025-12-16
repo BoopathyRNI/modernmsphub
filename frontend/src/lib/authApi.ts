@@ -1,4 +1,5 @@
-import { apiPost } from "./api";
+// src/lib/authApi.ts
+import { api } from "@/lib/api/apiClient";
 
 export type SignUpRequest = {
   firstName: string;
@@ -13,9 +14,8 @@ export type SignUpResponse = {
   message: string;
 };
 
-export async function signup(data: SignUpRequest): Promise<SignUpResponse> {
-  return apiPost<SignUpRequest, SignUpResponse>(
-    "/auth/signup",
-    data
-  );
+export function signup(
+  data: SignUpRequest
+): Promise<SignUpResponse | void> {
+  return api.post<SignUpResponse>("/auth/signup", data);
 }

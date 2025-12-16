@@ -22,7 +22,7 @@ const columns: GridColumn<CustomerRow>[] = [
   {
     key: "status",
     header: "Status",
-    render: row => (
+    render: (row) => (
       <span className="px-2 py-1 text-xs rounded bg-green-500 text-white">
         {row.status}
       </span>
@@ -39,7 +39,7 @@ const rows: CustomerRow[] = [
     createdOn: "7/23/2025",
     status: "Active",
   },
-   {
+  {
     id: 2,
     companyName: "Ford Motors",
     displayName: "Jordan Ford",
@@ -67,19 +67,16 @@ export default function CustomersPage() {
 
     const term = searchText.toLowerCase();
 
-    return rows.filter(row =>
+    return rows.filter((row) =>
       searchFields.some(({ key }) => {
         const value = row[key];
-        return (
-          value != null &&
-          String(value).toLowerCase().includes(term)
-        );
+        return value != null && String(value).toLowerCase().includes(term);
       })
     );
   }, [rows, searchText]);
 
   const placeholderText =
-    "Search with " + searchFields.map(f => f.label).join(", ");
+    "Search with " + searchFields.map((f) => f.label).join(", ");
 
   return (
     <div className="space-y-4">
@@ -92,7 +89,7 @@ export default function CustomersPage() {
         <input
           type="text"
           value={searchText}
-          onChange={e => setSearchText(e.target.value)}
+          onChange={(e) => setSearchText(e.target.value)}
           placeholder={placeholderText}
           className="w-full h-9 px-3 pr-8 rounded border border-slate-300 text-sm
                      focus:outline-none focus:ring-1 focus:ring-sky-500"
@@ -116,10 +113,8 @@ export default function CustomersPage() {
         columns={columns}
         rows={filteredRows}
         selectable
-        onSelectionChange={ids => console.log("Selected:", ids)}
+        onSelectionChange={(ids) => console.log("Selected:", ids)}
       />
     </div>
   );
 }
-
-
