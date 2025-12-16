@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TextFieldWithIcon from "@/components/ui/TextFieldWithIcon";
 import PrimaryButton from "@/components/ui/PrimaryButton";
-import { signup } from "../../lib/authApi"; // comment : check the directory dots
+import { signup } from "@/lib/authApi"; // comment : check the directory dots
 
 export default function SignupForm() {
   const [loading, setLoading] = useState(false);
