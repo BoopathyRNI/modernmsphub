@@ -1,4 +1,3 @@
-// components/auth/LoginForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -7,20 +6,33 @@ import { useRouter } from "next/navigation";
 import TextFieldWithIcon from "@/components/ui/TextFieldWithIcon";
 import DividerWithText from "@/components/ui/DividerWithText";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import { useToast } from "@/components/ui/toast/useToast";
 
 export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const toast = useToast();
 
   const handleLogin = async () => {
     setLoading(true);
 
     try {
-      // TODO: call login API when ready
+      // TODO: Replace with real login API call
       // await login(payload);
 
-      // ✅ Redirect to dashboard (App Shell applied)
-      router.push("/dashboard");
+      //  Success notification
+      toast.success("Login successful", "Welcome back");
+
+      // Optional small delay so toast is visible before redirect
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 300);
+    } catch (err: any) {
+      //  Error notification
+      toast.error(
+        err?.message || "Invalid email or password",
+        "Login failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -85,12 +97,12 @@ export default function LoginForm() {
           <input type="checkbox" className="h-3 w-3" />
           <span>Remember me</span>
         </label>
-        <button className="text-sky-600 hover:underline">
+        <button type="button" className="text-sky-600 hover:underline">
           Forgot Password?
         </button>
       </div>
 
-      {/* ✅ Sign in button (wired correctly now) */}
+      {/* Sign in button */}
       <PrimaryButton
         className="mb-4 w-full"
         onClick={handleLogin}
@@ -104,10 +116,16 @@ export default function LoginForm() {
 
       {/* Social buttons */}
       <div className="flex gap-3 mb-3">
-        <button className="flex-1 h-9 rounded border border-slate-300 text-[11px] font-medium text-slate-700 bg-white hover:bg-slate-50">
+        <button
+          type="button"
+          className="flex-1 h-9 rounded border border-slate-300 text-[11px] font-medium text-slate-700 bg-white hover:bg-slate-50"
+        >
           Google
         </button>
-        <button className="flex-1 h-9 rounded border border-slate-300 text-[11px] font-medium text-slate-700 bg-white hover:bg-slate-50">
+        <button
+          type="button"
+          className="flex-1 h-9 rounded border border-slate-300 text-[11px] font-medium text-slate-700 bg-white hover:bg-slate-50"
+        >
           Microsoft
         </button>
       </div>
@@ -115,7 +133,10 @@ export default function LoginForm() {
       {/* Sign up link */}
       <p className="text-[11px] text-slate-600 text-center">
         Don&apos;t have an account?{" "}
-        <a href="/signup" className="text-sky-600 font-semibold hover:underline">
+        <a
+          href="/signup"
+          className="text-sky-600 font-semibold hover:underline"
+        >
           Sign Up
         </a>
       </p>

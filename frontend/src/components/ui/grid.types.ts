@@ -1,3 +1,4 @@
+//src/components/ui/grid.types.ts
 export type GridColumn<T> = {
   key: keyof T;
   header: string;

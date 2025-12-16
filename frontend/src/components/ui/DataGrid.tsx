@@ -1,6 +1,7 @@
+//src/components/ui/DataGrid.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Pagination from "./Pagination";
 import { GridColumn, SortState } from "./grid.types";
 
@@ -8,8 +9,6 @@ interface DataGridProps<T> {
   columns: GridColumn<T>[];
   rows: T[];
   pageSize?: number;
-
-  /** Optional selection */
   selectable?: boolean;
   onSelectionChange?: (selectedIds: Array<string | number>) => void;
 }
@@ -24,6 +23,15 @@ export default function DataGrid<T extends { id: string | number }>({
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<T>>(null);
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
+
+  /** 🔑 column widths (px) */
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+
+  const resizingRef = useRef<{
+    key: string;
+    startX: number;
+    startWidth: number;
+  } | null>(null);
 
   /* ---------- Sorting ---------- */
 
@@ -89,95 +97,162 @@ export default function DataGrid<T extends { id: string | number }>({
     pagedRows.length > 0 &&
     pagedRows.every(r => selected.has(r.id));
 
+  /* ---------- Column resize ---------- */
+
+  const startResize = (e: React.MouseEvent, key: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const th = (e.target as HTMLElement).parentElement as HTMLElement;
+    const startWidth = th.offsetWidth;
+
+    resizingRef.current = {
+      key,
+      startX: e.clientX,
+      startWidth,
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", stopResize);
+  };
+
+  const onMouseMove = (e: MouseEvent) => {
+    if (!resizingRef.current) return;
+
+    const { key, startX, startWidth } = resizingRef.current;
+    const delta = e.clientX - startX;
+
+    setColumnWidths(prev => ({
+      ...prev,
+      [key]: Math.max(60, startWidth + delta),
+    }));
+  };
+
+  const stopResize = () => {
+    resizingRef.current = null;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", stopResize);
+  };
+
   /* ---------- Render ---------- */
 
   return (
     <div className="bg-white border border-slate-200 rounded-md overflow-hidden">
-      <table className="w-full text-sm border-collapse">
-        <thead className="bg-sky-100 text-slate-700 border-b-2 border-slate-200">
-          <tr>
-            {selectable && (
-              <th className="px-3 py-2 w-10 text-center border-r border-slate-200">
-                <input
-                  type="checkbox"
-                  checked={allChecked}
-                  onChange={toggleAllOnPage}
-                />
-              </th>
-            )}
-
-            {columns.map((col, idx) => (
-              <th
-                key={String(col.key)}
-                style={{ width: col.width }}
-                onClick={() => col.sortable && toggleSort(col.key)}
-                className={`
-                  px-4 py-2 text-left font-semibold
-                  ${col.sortable ? "cursor-pointer select-none" : ""}
-                  ${idx !== columns.length - 1 ? "border-r border-slate-200" : ""}
-                `}
-              >
-                <div className="flex items-center gap-1">
-                  {col.header}
-                  {sort?.key === col.key && (
-                    <span className="text-xs">
-                      {sort.direction === "asc" ? "▲" : "▼"}
-                    </span>
-                  )}
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {pagedRows.map(row => (
-            <tr
-              key={row.id}
-              className="border-b border-slate-200 hover:bg-slate-50"
-            >
+      <div className="relative overflow-x-auto">
+        <table className="w-full text-sm border-collapse table-fixed">
+          <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-300">
+            <tr>
               {selectable && (
-                <td className="px-3 py-2 text-center border-r border-slate-200">
+                <th className="w-10 px-3 py-2 text-center border-r border-slate-300">
                   <input
                     type="checkbox"
-                    checked={selected.has(row.id)}
-                    onChange={() => toggleRow(row.id)}
+                    checked={allChecked}
+                    onChange={toggleAllOnPage}
                   />
-                </td>
+                </th>
               )}
 
-              {columns.map((col, idx) => (
-                <td
-                  key={String(col.key)}
+              {columns.map((col, idx) => {
+                const width =
+                  columnWidths[String(col.key)] ??
+                  (col.width ? parseInt(col.width) : undefined);
+
+                return (
+                  <th
+                    key={String(col.key)}
+                    style={width ? { width } : undefined}
+                    onClick={() => col.sortable && toggleSort(col.key)}
+                    className={`
+                      relative px-4 py-2 text-left font-semibold text-slate-700
+                      ${col.sortable ? "cursor-pointer select-none" : ""}
+                      ${idx !== columns.length - 1 ? "border-r border-slate-300" : ""}
+                    `}
+                  >
+                    <div className="flex items-center gap-1">
+                      {col.header}
+                      {sort?.key === col.key && (
+                        <span className="text-xs">
+                          {sort.direction === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 🔧 Resize handle */}
+                    <div
+                      onMouseDown={e => startResize(e, String(col.key))}
+                      className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-sky-400"
+                    />
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+
+          <tbody>
+            {pagedRows.map(row => {
+              const isSelected = selected.has(row.id);
+              return (
+                <tr
+                  key={row.id}
                   className={`
-                    px-4 py-2 text-slate-700
-                    ${idx !== columns.length - 1 ? "border-r border-slate-200" : ""}
+                    border-b border-slate-200
+                    hover:bg-sky-50
+                    ${isSelected ? "bg-sky-100" : ""}
                   `}
                 >
-                  {col.render ? col.render(row) : String(row[col.key])}
+                  {selectable && (
+                    <td className="px-3 py-2 text-center border-r border-slate-200">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleRow(row.id)}
+                      />
+                    </td>
+                  )}
+
+                  {columns.map((col, idx) => (
+                    <td
+                      key={String(col.key)}
+                      style={
+                        columnWidths[String(col.key)]
+                          ? { width: columnWidths[String(col.key)] }
+                          : undefined
+                      }
+                      className={`
+                        px-4 py-2 text-slate-700 truncate
+                        ${idx !== columns.length - 1 ? "border-r border-slate-200" : ""}
+                      `}
+                    >
+                      {col.render ? col.render(row) : String(row[col.key])}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+
+            {pagedRows.length === 0 && (
+              <tr>
+                <td
+                  colSpan={columns.length + (selectable ? 1 : 0)}
+                  className="text-center py-8 text-slate-500"
+                >
+                  No records found
                 </td>
-              ))}
-            </tr>
-          ))}
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-          {pagedRows.length === 0 && (
-            <tr>
-              <td
-                colSpan={columns.length + (selectable ? 1 : 0)}
-                className="text-center py-6 text-slate-500"
-              >
-                No records found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      <div className="border-t border-slate-200 p-2">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 }
+
+
