@@ -2,8 +2,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import DataGrid from "@/components/ui/DataGrid";
-import { GridColumn } from "@/components/ui/grid.types";
+import DataGrid from "@/components/ui/grid/DataGrid";
+import { GridColumn } from "@/components/ui/grid/grid.types";
 
 type CustomerRow = {
   id: number;

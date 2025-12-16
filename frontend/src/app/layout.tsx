@@ -1,14 +1,7 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { ToastProvider } from "@/components/ui/toast/ToastProvider";
+// src/app/layout.tsx
 
-export const metadata: Metadata = {
-  title: {
-    default: "MSP Hub",
-    template: "%s | MSP Hub",
-  },
-  description: "Modern MSP management platform",
-};
+import "./globals.css";
+import AppProviders from "./AppProviders";
 
 export default function RootLayout({
   children,
@@ -18,10 +11,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ToastProvider>
-        {children}
-        </ToastProvider>
-        </body>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }
+

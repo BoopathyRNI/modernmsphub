@@ -5,7 +5,7 @@ export default function GlobalError({
 }: {
   error: Error & { digest?: string };
 }) {
-  // 🔥 Always log catastrophic errors
+  //  Always log catastrophic errors
   console.error("Global error:", error);
 
   return (

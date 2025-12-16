@@ -1,8 +1,8 @@
-//src/components/ui/DataGrid.tsx
+//src/components/ui/grid/DataGrid.tsx
 "use client";
 
 import { useState, useMemo, useRef } from "react";
-import Pagination from "./Pagination";
+import Pagination from "@/components/ui/grid/Pagination";
 import { GridColumn, SortState } from "./grid.types";
 
 interface DataGridProps<T> {

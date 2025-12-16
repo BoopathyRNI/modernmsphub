@@ -2,7 +2,13 @@
 
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  ReactNode,
+} from "react";
 import { Toast } from "./toast.types";
 import ToastContainer from "./ToastContainer";
 
@@ -14,9 +20,10 @@ const ToastContext = createContext<ToastContextType | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const counterRef = useRef(0);
 
   const showToast = (toast: Omit<Toast, "id">) => {
-    const id = crypto.randomUUID();
+    const id = `toast-${++counterRef.current}`;
     setToasts(prev => [...prev, { ...toast, id }]);
   };
 
@@ -39,3 +46,4 @@ export function useToastContext() {
   }
   return ctx;
 }
+
