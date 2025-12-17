@@ -1,4 +1,4 @@
-// src/app/not-found.tsx
+//src/app/(app)/not-found.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -13,14 +13,14 @@ export default function NotFound() {
       </h1>
 
       <p className="text-slate-600 mb-6 text-center max-w-md">
-        The page you are looking for does not exist.
+        The page you are looking for doesn&apos;t exist or may have been moved.
       </p>
 
       <button
-        onClick={() => router.push("/login")}
+        onClick={() => router.push("/dashboard")}
         className="px-4 py-2 rounded bg-sky-600 text-white text-sm hover:bg-sky-700"
       >
-        Go to Login
+        Go to Dashboard
       </button>
     </div>
   );

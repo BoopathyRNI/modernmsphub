@@ -1,32 +1,45 @@
-//src/components/ui/grid/DataGrid.tsx
+// src/components/ui/grid/DataGrid.tsx
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import Pagination from "@/components/ui/grid/Pagination";
 import { GridColumn, SortState } from "./grid.types";
+
+interface PaginationProps {
+  page: number;
+  pageSize: number;
+  totalRecords: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}
 
 interface DataGridProps<T> {
   columns: GridColumn<T>[];
   rows: T[];
-  pageSize?: number;
   selectable?: boolean;
+  pagination?: PaginationProps;
   onSelectionChange?: (selectedIds: Array<string | number>) => void;
+}
+
+/** 🔑 Type guard to identify data columns */
+function hasKey<T>(
+  col: GridColumn<T>
+): col is Extract<GridColumn<T>, { key: keyof T }> {
+  return "key" in col;
 }
 
 export default function DataGrid<T extends { id: string | number }>({
   columns,
   rows,
-  pageSize = 5,
   selectable = false,
+  pagination,
   onSelectionChange,
 }: DataGridProps<T>) {
-  const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<T>>(null);
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
-  /** 🔑 column widths (px) */
+  /** Column widths */
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
-
   const resizingRef = useRef<{
     key: string;
     startX: number;
@@ -38,32 +51,25 @@ export default function DataGrid<T extends { id: string | number }>({
   const sortedRows = useMemo(() => {
     if (!sort) return rows;
 
+    const { key, direction } = sort;
+
     return [...rows].sort((a, b) => {
-      const aVal = a[sort.key];
-      const bVal = b[sort.key];
+      const aVal = a[key];
+      const bVal = b[key];
 
       if (aVal === bVal) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
 
-      return sort.direction === "asc"
+      return direction === "asc"
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
     });
   }, [rows, sort]);
 
-  /* ---------- Pagination ---------- */
-
-  const totalPages = Math.ceil(sortedRows.length / pageSize);
-
-  const pagedRows = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return sortedRows.slice(start, start + pageSize);
-  }, [sortedRows, page, pageSize]);
-
   const toggleSort = (key: keyof T) => {
-    setPage(1);
-    setSort(prev =>
+    pagination?.onPageChange(1); // reset to first page on sort
+    setSort((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
         : { key, direction: "asc" }
@@ -79,14 +85,12 @@ export default function DataGrid<T extends { id: string | number }>({
     onSelectionChange?.(Array.from(copy));
   };
 
-  const toggleAllOnPage = () => {
+  const toggleAll = () => {
     const copy = new Set(selected);
-    const pageIds = pagedRows.map(r => r.id);
-    const allSelected = pageIds.every(id => copy.has(id));
+    const rowIds = sortedRows.map((r) => r.id);
+    const allSelected = rowIds.every((id) => copy.has(id));
 
-    pageIds.forEach(id =>
-      allSelected ? copy.delete(id) : copy.add(id)
-    );
+    rowIds.forEach((id) => (allSelected ? copy.delete(id) : copy.add(id)));
 
     setSelected(copy);
     onSelectionChange?.(Array.from(copy));
@@ -94,8 +98,8 @@ export default function DataGrid<T extends { id: string | number }>({
 
   const allChecked =
     selectable &&
-    pagedRows.length > 0 &&
-    pagedRows.every(r => selected.has(r.id));
+    sortedRows.length > 0 &&
+    sortedRows.every((r) => selected.has(r.id));
 
   /* ---------- Column resize ---------- */
 
@@ -122,7 +126,7 @@ export default function DataGrid<T extends { id: string | number }>({
     const { key, startX, startWidth } = resizingRef.current;
     const delta = e.clientX - startX;
 
-    setColumnWidths(prev => ({
+    setColumnWidths((prev) => ({
       ...prev,
       [key]: Math.max(60, startWidth + delta),
     }));
@@ -147,41 +151,53 @@ export default function DataGrid<T extends { id: string | number }>({
                   <input
                     type="checkbox"
                     checked={allChecked}
-                    onChange={toggleAllOnPage}
+                    onChange={toggleAll}
                   />
                 </th>
               )}
 
               {columns.map((col, idx) => {
-                const width =
-                  columnWidths[String(col.key)] ??
-                  (col.width ? parseInt(col.width) : undefined);
+                const width = hasKey(col)
+                  ? columnWidths[String(col.key)]
+                  : undefined;
 
                 return (
                   <th
-                    key={String(col.key)}
+                    key={hasKey(col) ? String(col.key) : `action-${idx}`}
                     style={width ? { width } : undefined}
-                    onClick={() => col.sortable && toggleSort(col.key)}
+                    onClick={() => {
+                      if (!hasKey(col) || !col.sortable) return;
+                      toggleSort(col.key);
+                    }}
                     className={`
                       relative px-4 py-2 text-left font-semibold text-slate-700
-                      ${col.sortable ? "cursor-pointer select-none" : ""}
-                      ${idx !== columns.length - 1 ? "border-r border-slate-300" : ""}
+                      ${
+                        hasKey(col) && col.sortable
+                          ? "cursor-pointer select-none"
+                          : ""
+                      }
+                      ${
+                        idx !== columns.length - 1
+                          ? "border-r border-slate-300"
+                          : ""
+                      }
                     `}
                   >
                     <div className="flex items-center gap-1">
                       {col.header}
-                      {sort?.key === col.key && (
+                      {hasKey(col) && sort?.key === col.key && (
                         <span className="text-xs">
                           {sort.direction === "asc" ? "▲" : "▼"}
                         </span>
                       )}
                     </div>
 
-                    {/* 🔧 Resize handle */}
-                    <div
-                      onMouseDown={e => startResize(e, String(col.key))}
-                      className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-sky-400"
-                    />
+                    {hasKey(col) && (
+                      <div
+                        onMouseDown={(e) => startResize(e, String(col.key))}
+                        className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-sky-400"
+                      />
+                    )}
                   </th>
                 );
               })}
@@ -189,7 +205,7 @@ export default function DataGrid<T extends { id: string | number }>({
           </thead>
 
           <tbody>
-            {pagedRows.map(row => {
+            {sortedRows.map((row) => {
               const isSelected = selected.has(row.id);
               return (
                 <tr
@@ -212,25 +228,33 @@ export default function DataGrid<T extends { id: string | number }>({
 
                   {columns.map((col, idx) => (
                     <td
-                      key={String(col.key)}
+                      key={hasKey(col) ? String(col.key) : `action-${idx}`}
                       style={
-                        columnWidths[String(col.key)]
+                        hasKey(col) && columnWidths[String(col.key)]
                           ? { width: columnWidths[String(col.key)] }
                           : undefined
                       }
                       className={`
                         px-4 py-2 text-slate-700 truncate
-                        ${idx !== columns.length - 1 ? "border-r border-slate-200" : ""}
+                        ${
+                          idx !== columns.length - 1
+                            ? "border-r border-slate-200"
+                            : ""
+                        }
                       `}
                     >
-                      {col.render ? col.render(row) : String(row[col.key])}
+                      {col.render
+                        ? col.render(row)
+                        : hasKey(col)
+                        ? String(row[col.key])
+                        : null}
                     </td>
                   ))}
                 </tr>
               );
             })}
 
-            {pagedRows.length === 0 && (
+            {sortedRows.length === 0 && (
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
@@ -244,15 +268,17 @@ export default function DataGrid<T extends { id: string | number }>({
         </table>
       </div>
 
-      <div className="border-t border-slate-200 p-2">
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-        />
-      </div>
+      {pagination && (
+        <div className="border-t border-slate-200 p-2">
+          <Pagination
+            page={pagination.page}
+            pageSize={pagination.pageSize}
+            totalRecords={pagination.totalRecords}
+            onPageChange={pagination.onPageChange}
+            onPageSizeChange={pagination.onPageSizeChange}
+          />
+        </div>
+      )}
     </div>
   );
 }
-
-

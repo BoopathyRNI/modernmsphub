@@ -6,10 +6,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { key: "dashboard", label: "Dashboard", icon: "/icons/home.svg", href: "/dashboard" },
-  { key: "products", label: "Products", icon: "/icons/cubes.svg", href: "/products" },
-  { key: "customers", label: "Customers", icon: "/icons/users.svg", href: "/customers" },
-  { key: "reports", label: "Reports", icon: "/icons/chart.svg", href: "/reports" },
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    icon: "/icons/home.svg",
+    href: "/dashboard",
+  },
+  {
+    key: "products",
+    label: "Products",
+    icon: "/icons/cubes.svg",
+    href: "/products",
+  },
+  {
+    key: "customers",
+    label: "Customers",
+    icon: "/icons/users.svg",
+    href: "/customers",
+  },
+  {
+    key: "reports",
+    label: "Reports",
+    icon: "/icons/chart.svg",
+    href: "/reports",
+  },
 ];
 
 export default function AppSidebar() {
@@ -25,7 +45,7 @@ export default function AppSidebar() {
       {/* Toggle */}
       <div className="flex justify-end px-2 py-2">
         <button
-          onClick={() => setExpanded(v => !v)}
+          onClick={() => setExpanded((v) => !v)}
           className="text-slate-500 hover:text-slate-700"
         >
           {expanded ? "⟨" : "⟩"}
@@ -34,7 +54,7 @@ export default function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-1 px-2">
-        {navItems.map(item => {
+        {navItems.map((item) => {
           const active = pathname === item.href;
 
           return (
@@ -48,17 +68,10 @@ export default function AppSidebar() {
                 ${active ? "bg-slate-100 font-semibold" : ""}
               `}
             >
-              <Image
-                src={item.icon}
-                alt={item.label}
-                width={18}
-                height={18}
-              />
+              <Image src={item.icon} alt={item.label} width={18} height={18} />
 
               {expanded && (
-                <span className="text-sm whitespace-nowrap">
-                  {item.label}
-                </span>
+                <span className="text-sm whitespace-nowrap">{item.label}</span>
               )}
             </Link>
           );
