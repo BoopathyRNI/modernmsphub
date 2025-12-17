@@ -2,6 +2,11 @@
 import { ApiError } from "@/types/api-error";
 
 export function normalizeApiError(error: any): ApiError {
+  // Already normalized (IMPORTANT)
+  if (error?.status && typeof error.status === "number") {
+    return error as ApiError;
+  }
+
   // API responded with error status
   if (error?.response) {
     return {
@@ -28,3 +33,4 @@ export function normalizeApiError(error: any): ApiError {
     message: "Unexpected error occurred",
   };
 }
+

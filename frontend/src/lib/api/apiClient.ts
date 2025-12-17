@@ -1,6 +1,10 @@
 // src/lib/api/apiClient.ts
 import { normalizeApiError } from "./normalizeApiError";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "https://localhost:5002/api";
+
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 interface RequestOptions extends RequestInit {
@@ -14,7 +18,7 @@ async function request<T>(
   options?: RequestOptions
 ): Promise<T | void> {
   try {
-    const res = await fetch(url, {
+    const res = await fetch(`${API_BASE_URL}${url}`, {
       method,
       body: body ? JSON.stringify(body) : undefined,
       headers: {
@@ -28,9 +32,7 @@ async function request<T>(
       let errorBody: any = null;
       try {
         errorBody = await res.json();
-      } catch {
-        // ignore JSON parse failure
-      }
+      } catch {}
 
       throw normalizeApiError({
         response: {
@@ -40,14 +42,10 @@ async function request<T>(
       });
     }
 
-    // No content response (DELETE, etc.)
-    if (res.status === 204) {
-      return;
-    }
+    if (res.status === 204) return;
 
     return (await res.json()) as T;
   } catch (error) {
-    // Network / unexpected errors
     throw normalizeApiError(error);
   }
 }
