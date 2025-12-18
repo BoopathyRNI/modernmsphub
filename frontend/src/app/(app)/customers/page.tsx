@@ -1,7 +1,8 @@
-// src/app/(app)/customers/page.tsx
+//src/app/(app).customers/page.tsx
+
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import DataGrid from "@/components/ui/grid/DataGrid";
 import { GridColumn } from "@/components/ui/grid/grid.types";
 
@@ -9,7 +10,10 @@ import { useConfirm } from "@/components/ui/confirm/useConfirm";
 import { useToast } from "@/components/ui/toast/useToast";
 import { handleApiError } from "@/lib/api/handleApiError";
 import { usePagedQuery } from "@/hooks/usePagedQuery";
-// import { api } from "@/lib/api/apiClient"; // 🔜 use later
+
+import { Dialog, DialogFooter } from "@/components/ui/dialog";
+import { Select } from "@/components/ui/select";
+import { FormField } from "@/components/ui/form";
 
 /* ----------------------------------
  * Types
@@ -30,93 +34,6 @@ type SearchField<T> = {
 };
 
 /* ----------------------------------
- * Mock data (replace with API later)
- * ---------------------------------- */
-
-const ALL_ROWS: CustomerRow[] = [
-  {
-    id: 1,
-    companyName: "Kia Motors",
-    displayName: "Kim Jordan",
-    salesRep: "Mark Wood",
-    createdOn: "7/23/2025",
-    status: "Active",
-  },
-  {
-    id: 2,
-    companyName: "Ford Motors",
-    displayName: "Jordan Ford",
-    salesRep: "Kristian Chery",
-    createdOn: "8/15/2025",
-    status: "Active",
-  },
-  {
-    id: 3,
-    companyName: "Tesla",
-    displayName: "Elon Musk",
-    salesRep: "Alex Ray",
-    createdOn: "6/02/2025",
-    status: "Inactive",
-  },
-  {
-    id: 4,
-    companyName: "BMW",
-    displayName: "John Smith",
-    salesRep: "Maria Hill",
-    createdOn: "5/12/2025",
-    status: "Active",
-  },
-  {
-    id: 5,
-    companyName: "Audi",
-    displayName: "Robert Lang",
-    salesRep: "Chris Evans",
-    createdOn: "4/18/2025",
-    status: "Active",
-  },
-  {
-    id: 6,
-    companyName: "Mercedes-Benz",
-    displayName: "Sophia Brown",
-    salesRep: "Natalie Portman",
-    createdOn: "3/22/2025",
-    status: "Inactive",
-  },
-  {
-    id: 7,
-    companyName: "Hyundai",
-    displayName: "Arjun Kumar",
-    salesRep: "Ravi Shankar",
-    createdOn: "2/10/2025",
-    status: "Active",
-  },
-  {
-    id: 8,
-    companyName: "Toyota",
-    displayName: "Ken Watanabe",
-    salesRep: "Yuki Tanaka",
-    createdOn: "1/05/2025",
-    status: "Active",
-  },
-  {
-    id: 9,
-    companyName: "Honda",
-    displayName: "Michael Chen",
-    salesRep: "Linda Park",
-    createdOn: "12/15/2024",
-    status: "Inactive",
-  },
-  {
-    id: 10,
-    companyName: "Volkswagen",
-    displayName: "Oliver Stone",
-    salesRep: "Emma Watson",
-    createdOn: "11/02/2024",
-    status: "Active",
-  },
-];
-
-/* ----------------------------------
  * Search config
  * ---------------------------------- */
 
@@ -135,7 +52,60 @@ export default function CustomersPage() {
   const confirm = useConfirm();
   const toast = useToast();
 
-  /* ---------- Grid Paged Query ---------- */
+  /* ---------- Dialog state ---------- */
+
+  const [openAdd, setOpenAdd] = useState(false);
+
+  const [companyName, setCompanyName] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [salesRep, setSalesRep] = useState("");
+  const [status, setStatus] = useState<string | undefined>();
+
+  const [errors, setErrors] = useState<{
+    companyName?: string;
+    displayName?: string;
+    status?: string;
+  }>({});
+
+  /* ---------- Data (mock, stateful) ---------- */
+
+  const [allRows, setAllRows] = useState<CustomerRow[]>([
+    {
+      id: 1,
+      companyName: "Kia Motors",
+      displayName: "Kim Jordan",
+      salesRep: "Mark Wood",
+      createdOn: "7/23/2025",
+      status: "Active",
+    },
+    {
+      id: 2,
+      companyName: "Ford Motors",
+      displayName: "Jordan Ford",
+      salesRep: "Kristian Chery",
+      createdOn: "8/15/2025",
+      status: "Active",
+    },
+    {
+      id: 3,
+      companyName: "Tesla",
+      displayName: "Elon Musk",
+      salesRep: "Alex Ray",
+      createdOn: "6/02/2025",
+      status: "Inactive",
+    },
+    {
+      id: 4,
+      companyName: "BMW",
+      displayName: "John Smith",
+      salesRep: "Maria Hill",
+      createdOn: "5/12/2025",
+      status: "Active",
+    },
+  ]);
+
+  /* ---------- Grid paging ---------- */
+
   const {
     page,
     pageSize,
@@ -151,21 +121,20 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(false);
 
   /* ----------------------------------
-   * Search + pagination (server-style)
+   * Search + pagination
    * ---------------------------------- */
 
   useEffect(() => {
     loadCustomers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, searchText]);
+  }, [page, pageSize, searchText, allRows]);
 
   const loadCustomers = async () => {
     setLoading(true);
     try {
-      // 🔁 TEMP: simulate server filtering
       const filtered = !searchText.trim()
-        ? ALL_ROWS
-        : ALL_ROWS.filter((row) => {
+        ? allRows
+        : allRows.filter((row) => {
             const term = searchText.toLowerCase();
             return searchFields.some(({ key }) =>
               String(row[key]).toLowerCase().includes(term)
@@ -175,19 +144,7 @@ export default function CustomersPage() {
       setTotalRecords(filtered.length);
 
       const start = (page - 1) * pageSize;
-      const paged = filtered.slice(start, start + pageSize);
-
-      setRows(paged);
-
-      // 🔜 REAL API VERSION (later)
-      /*
-      const res = await api.get("/customers", {
-        params: { page, pageSize, searchText },
-      });
-
-      setRows(res.items);
-      setTotalRecords(res.totalRecords);
-      */
+      setRows(filtered.slice(start, start + pageSize));
     } catch (err) {
       handleApiError(err, toast);
     } finally {
@@ -202,7 +159,7 @@ export default function CustomersPage() {
   const handleDelete = async (row: CustomerRow) => {
     const confirmed = await confirm({
       title: "Delete customer",
-      message: `Are you sure you want to delete ${row.companyName}? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${row.companyName}?`,
       confirmText: "Delete",
       cancelText: "Cancel",
       danger: true,
@@ -210,12 +167,52 @@ export default function CustomersPage() {
 
     if (!confirmed) return;
 
-    try {
-      // await api.delete(`/customers/${row.id}`);
-      toast.success("Customer deleted successfully");
-    } catch (err) {
-      handleApiError(err, toast);
-    }
+    setAllRows((prev) => prev.filter((r) => r.id !== row.id));
+    toast.success("Customer deleted successfully");
+  };
+
+  /* ----------------------------------
+   * Validation + Save
+   * ---------------------------------- */
+
+  const validateForm = () => {
+    const nextErrors: typeof errors = {};
+
+    if (!companyName.trim())
+      nextErrors.companyName = "Company name is required";
+
+    if (!displayName.trim())
+      nextErrors.displayName = "Display name is required";
+
+    if (!status) nextErrors.status = "Status is required";
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSave = () => {
+    if (!validateForm()) return;
+
+    const newCustomer: CustomerRow = {
+      id: Date.now(),
+      companyName,
+      displayName,
+      salesRep,
+      status: status!,
+      createdOn: new Date().toLocaleDateString(),
+    };
+
+    setAllRows((prev) => [newCustomer, ...prev]);
+
+    // reset form + errors
+    setCompanyName("");
+    setDisplayName("");
+    setSalesRep("");
+    setStatus(undefined);
+    setErrors({});
+
+    setOpenAdd(false);
+    toast.success("Customer added successfully");
   };
 
   /* ----------------------------------
@@ -259,7 +256,7 @@ export default function CustomersPage() {
   return (
     <div className="space-y-4">
       {/* 🔍 Search */}
-      <div className="max-w-sm relative">
+      <div className="max-w-sm">
         <label className="block text-xs font-medium text-slate-600 mb-1">
           Search
         </label>
@@ -269,33 +266,28 @@ export default function CustomersPage() {
           value={searchText}
           onChange={(e) => {
             setSearchText(e.target.value);
-            setPage(1); // 🔑 reset page on search
+            setPage(1);
           }}
           placeholder={placeholderText}
-          className="w-full h-9 px-3 pr-8 rounded border border-slate-300 text-sm
+          className="w-full h-9 px-3 rounded border border-slate-300 text-sm
                      focus:outline-none focus:ring-1 focus:ring-sky-500"
         />
+      </div>
 
-        {searchText && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchText("");
-              setPage(1);
-            }}
-            className="absolute right-2 top-[26px] text-slate-400 hover:text-slate-600"
-            title="Clear search"
-          >
-            ✕
-          </button>
-        )}
+      {/* ➕ Add */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setOpenAdd(true)}
+          className="h-9 px-4 rounded bg-sky-600 text-white text-sm hover:bg-sky-700"
+        >
+          + Add Customer
+        </button>
       </div>
 
       {/* 📊 Grid */}
       <DataGrid
         columns={columns}
         rows={rows}
-        selectable
         pagination={{
           page,
           pageSize,
@@ -306,8 +298,62 @@ export default function CustomersPage() {
             setPage(1);
           },
         }}
-        onSelectionChange={(ids) => console.log("Selected row ids:", ids)}
       />
+
+      {/* ➕ Add Dialog */}
+      <Dialog
+        open={openAdd}
+        title="Add Customer"
+        onClose={() => setOpenAdd(false)}
+      >
+        <div className="space-y-3">
+          <FormField label="Company Name" required error={errors.companyName}>
+            <input
+              value={companyName}
+              onChange={(e) => {
+                setCompanyName(e.target.value);
+                setErrors((prev) => ({ ...prev, companyName: undefined }));
+              }}
+              className="w-full h-9 px-3 border border-slate-300 rounded"
+            />
+          </FormField>
+
+          <FormField label="Display Name" required error={errors.displayName}>
+            <input
+              value={displayName}
+              onChange={(e) => {
+                setDisplayName(e.target.value);
+                setErrors((prev) => ({ ...prev, displayName: undefined }));
+              }}
+              className="w-full h-9 px-3 border border-slate-300 rounded"
+            />
+          </FormField>
+
+          <FormField label="Sales Rep Name">
+            <input
+              value={salesRep}
+              onChange={(e) => setSalesRep(e.target.value)}
+              className="w-full h-9 px-3 border border-slate-300 rounded"
+            />
+          </FormField>
+
+          <FormField label="Status" required error={errors.status}>
+            <Select
+              value={status}
+              onChange={(v) => {
+                setStatus(v);
+                setErrors((prev) => ({ ...prev, status: undefined }));
+              }}
+              options={[
+                { label: "Active", value: "Active" },
+                { label: "Inactive", value: "Inactive" },
+              ]}
+            />
+          </FormField>
+        </div>
+
+        <DialogFooter onCancel={() => setOpenAdd(false)} onSave={handleSave} />
+      </Dialog>
 
       {loading && (
         <div className="text-sm text-slate-500">Loading customers…</div>

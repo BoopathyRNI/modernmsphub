@@ -17,10 +17,10 @@ export default function NotFound() {
       </p>
 
       <button
-        onClick={() => router.push("/login")}
+        onClick={() => router.push("/dashboard")}
         className="px-4 py-2 rounded bg-sky-600 text-white text-sm hover:bg-sky-700"
       >
-        Go to Login
+        Go to Dashboard
       </button>
     </div>
   );
