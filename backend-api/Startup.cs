@@ -3,6 +3,7 @@ using backend_api.Repositories;
 using backend_api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
 
 namespace backend_api
 {
@@ -22,8 +23,21 @@ namespace backend_api
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddControllers()
+            .AddJsonOptions(o =>
+            {
+                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+
+            services.AddSignalR().AddJsonProtocol(o =>
+            {
+                o.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+
             // Repositories
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IJobRepository, JobRepository>();
+            services.AddSingleton<IJobSimulator, JobSimulator>();
 
             // Services
             services.AddScoped<IUserService, UserService>();
@@ -33,9 +47,10 @@ namespace backend_api
                 options.AddPolicy("AllowAll", builder =>
                 {
                     builder
-                        .AllowAnyOrigin()
+                        .WithOrigins("http://localhost:3000", "https://localhost:3000")
+                        .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowAnyHeader();
+                        .AllowCredentials(); // REQUIRED FOR SIGNALR
                 });
             });
 
@@ -64,16 +79,17 @@ namespace backend_api
 
             app.UseHttpsRedirection();
 
+            app.UseRouting();
             // Enable CORS here
             app.UseCors("AllowAll");
-
-            app.UseRouting();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<JobHub>("/hubs/jobs");
             });
+
         }
     }
 }
